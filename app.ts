@@ -231,10 +231,6 @@ function computeMap(map: IMap): IMap {
 }
 
 function nextMove(map: IMap, currentTile: ITile, endPoint: ITile, currentPath: string, portalsUsed: number, stats: IStats) {
-
-    if (stats.minSteps > -1 && currentPath.length > stats.minSteps)
-        return;
-
     const x: number = currentTile.coords.x;
     const y: number = currentTile.coords.y;
 
@@ -245,6 +241,7 @@ function nextMove(map: IMap, currentTile: ITile, endPoint: ITile, currentPath: s
         { x: x, y: y + 1, direction: "S" }, //S - 7
     ] as Array<ICoords>
 
+    //Cerco le prossime caselle in cui spostarmi
     const nextTiles = findTiles(map, nextCells)
 
     /*
@@ -252,7 +249,9 @@ function nextMove(map: IMap, currentTile: ITile, endPoint: ITile, currentPath: s
         console.log(printMap(map, currentTile))
     */
 
+    //Ciclo per tutte le caselle trovate
     for (let nextTile of nextTiles) {
+        //Calcolo la mappa successiva qui, perchè ogni percorso non deve influenzare quello di altri
         const nextMap = computeMap(map)
 
         let newPath = currentPath + nextCells.find(e => e.x == nextTile.coords.x && e.y == nextTile.coords.y)?.direction
@@ -335,27 +334,36 @@ function nextMove(map: IMap, currentTile: ITile, endPoint: ITile, currentPath: s
 }
 
 async function main() {
+    //Leggo la mappa
     const map: IMap = readMap("map.txt")
+
+    //Cerco punti iniziali e finali
     const [startPoint,
         endPoint]
         = findStartEndPoint(map)
 
 
+    //Imposto il punto iniziale come visitato e rendo le tile iniziali e finali delle tile normali
     map[startPoint.coords.x][startPoint.coords.y].isVisited = true
     map[startPoint.coords.x][startPoint.coords.y].value = "."
     map[endPoint.coords.x][endPoint.coords.y].value = "."
 
+    //Oggetto per contenere percorsi fatti, path più breve e numero di portali
     const stats: IStats = {
         foundPaths: Array<IPaths>(),
         minSteps: -1,
         maxPortals: -1
     }
 
+    //Eseguo la prima mossa
     nextMove(map, startPoint, endPoint, "", 0, stats)
 
     console.log(stats)
+
+    //Stampo secondo le regole richieste
     console.log(stats.foundPaths.length + "-" + stats.foundPaths.map(e => e.path).sort().join("") + "-" + stats.maxPortals)
 
+    //Codice per creare cartella con i vari passaggi delle mappe
     /* let tmpMap= map
      for(let i = 0; i < 14; i++)
      {
