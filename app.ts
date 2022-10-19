@@ -295,7 +295,7 @@ function nextMove(map: IMap, currentTile: ITile, endPoint: ITile, currentPath: s
             continue;
         }
 
-
+        //Verifico se è un buco nero o se lo sta per diventare o se non ho ancora visitato al prossima cella
         if (!isBlackHole(nextTile.value)
             && !isBlackHole(nextMap[nextTile.coords.x][nextTile.coords.y].value)
             && !nextTile.isVisited) {

@@ -9,7 +9,7 @@
   },
   "keywords": [],
   "author": "Stefano Valenzano",
-  "license": "ISC",
+  "license": "",
   "devDependencies": {
     "@types/node": "^18.11.0"
   },
