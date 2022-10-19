@@ -230,10 +230,13 @@ function computeMap(map: IMap): IMap {
     return newMap
 }
 
-function nextMove(map: IMap, startPoint: ITile, endPoint: ITile, currentPath: string, portalsUsed: number, stats: IStats) {
+function nextMove(map: IMap, currentTile: ITile, endPoint: ITile, currentPath: string, portalsUsed: number, stats: IStats) {
 
-    const x: number = startPoint.coords.x;
-    const y: number = startPoint.coords.y;
+    if (stats.minSteps > -1 && currentPath.length > stats.minSteps)
+        return;
+
+    const x: number = currentTile.coords.x;
+    const y: number = currentTile.coords.y;
 
     const nextCells = [
         { x: x, y: y - 1, direction: "N" }, //N - 2
@@ -244,14 +247,14 @@ function nextMove(map: IMap, startPoint: ITile, endPoint: ITile, currentPath: st
 
     const nextTiles = findTiles(map, nextCells)
 
-
-    /*console.clear()
-    console.log(printMap(map, startPoint))*/
+    /*
+        console.clear()
+        console.log(printMap(map, currentTile))
+    */
 
     for (let nextTile of nextTiles) {
-
         const nextMap = computeMap(map)
-        let nextMapTile: ITile = nextMap[nextTile.coords.x][nextTile.coords.y]
+
         let newPath = currentPath + nextCells.find(e => e.x == nextTile.coords.x && e.y == nextTile.coords.y)?.direction
 
         if (stats.minSteps > -1 && newPath.length > stats.minSteps)
@@ -293,15 +296,17 @@ function nextMove(map: IMap, startPoint: ITile, endPoint: ITile, currentPath: st
             continue;
         }
 
-        
-        //Se non è un buco nero e non diventa un buco nero e non ho ancora visitato
-  /*      if (newPath.startsWith("NESWN")) 
-            console.log(newPath, isBlackHole(nextTile.value), isBlackHole(nextMapTile.value), nextTile.isVisited)
-*/
-        if (!isBlackHole(nextTile.value) && !isBlackHole(nextMapTile.value) && !nextTile.isVisited) {
 
+        if (!isBlackHole(nextTile.value)
+            && !isBlackHole(nextMap[nextTile.coords.x][nextTile.coords.y].value)
+            && !nextTile.isVisited) {
+
+            let nextX = nextTile.coords.x
+            let nextY = nextTile.coords.y
+            let tmpPortalUsed = portalsUsed
             //Controllo se normal tile o portal
             //Se portale controllo che anche la destinazione non stia per diventare un buconero
+
             if (isPortal(nextTile.value)) {
                 const portals = findPortalPair(map, nextTile.value)
                 const portal = (portals[0].coords.x == nextTile.coords.x && portals[0].coords.y == nextTile.coords.y) ? portals[1] : portals[0]
@@ -313,21 +318,18 @@ function nextMove(map: IMap, startPoint: ITile, endPoint: ITile, currentPath: st
 
                 nextMap[portals[0].coords.x][portals[0].coords.y].value = ".";
                 nextMap[portals[1].coords.x][portals[1].coords.y].value = ".";
-                
+
                 nextMap[portals[0].coords.x][portals[0].coords.y].isVisited = true;
                 nextMap[portals[1].coords.x][portals[1].coords.y].isVisited = true;
 
-                nextTile = map[portal.coords.x][portal.coords.y]
-                nextMapTile = nextMap[portal.coords.x][portal.coords.y]
-
-                portalsUsed++
+                nextX = portal.coords.x
+                nextY = portal.coords.y
+                tmpPortalUsed++
             }
 
-            nextMap[nextTile.coords.x][nextTile.coords.y].isVisited = true;
-            nextMap[nextMapTile.coords.x][nextMapTile.coords.y].isVisited = true;
+            nextMap[nextX][nextY].isVisited = true;
 
-            nextMove(nextMap, nextTile, endPoint, newPath, portalsUsed, stats)
-            continue;
+            nextMove(nextMap, nextMap[nextX][nextY], endPoint, newPath, tmpPortalUsed, stats)
         }
     }
 }
@@ -348,8 +350,6 @@ async function main() {
         minSteps: -1,
         maxPortals: -1
     }
-    // printMap(computeMap(map))
-    //    console.log(printMap((computeMap(map))))
 
     nextMove(map, startPoint, endPoint, "", 0, stats)
 
